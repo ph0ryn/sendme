@@ -8,6 +8,7 @@ import { createLogger } from "./logger.ts";
 
 const configDirectoryPath = join(homedir(), ".config", "sendme");
 const configFilePath = join(configDirectoryPath, "config.json");
+const logDirectoryPath = join(homedir(), ".cache", "sendme", "log");
 const authTestBody = { content: "sendme auth test" };
 
 interface Config {
@@ -35,21 +36,21 @@ const main = async (): Promise<void> => {
 };
 
 const auth = async (webhookUrlText: string | undefined): Promise<void> => {
-  const logger = createLogger();
+  const logger = await createLogger(createLogFilePath());
   const webhookUrl = parseWebhookUrl(webhookUrlText);
   const requestBody = JSON.stringify(authTestBody);
 
   if (webhookUrl === undefined) {
-    logger.log("saved: false");
-    logger.error("Invalid webhook URL. Expected an http or https URL.");
-    logger.log(`requestBody: ${webhookUrlText ?? ""}`);
+    await logger.stdout("saved: false");
+    await logger.error("Invalid webhook URL. Expected an http or https URL.");
+    await logger.stdout(`requestBody: ${webhookUrlText ?? ""}`);
     process.exitCode = 1;
 
     return;
   }
 
-  logger.log(`testedUrl: ${webhookUrl}`);
-  logger.log(`requestBody: ${requestBody}`);
+  await logger.stdout(`testedUrl: ${webhookUrl}`);
+  await logger.stdout(`requestBody: ${requestBody}`);
 
   const result = await postJson(webhookUrl, requestBody);
   const saved = isSuccessStatus(result.status);
@@ -58,10 +59,10 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
     await saveConfig({ webhookUrl });
   }
 
-  logger.log(`status: ${result.status}`);
-  logger.log(`saved: ${saved}`);
-  logger.error(result.error);
-  logger.log(`responseBody: ${result.body}`);
+  await logger.stdout(`status: ${result.status}`);
+  await logger.stdout(`saved: ${saved}`);
+  await logger.error(result.error);
+  await logger.stdout(`responseBody: ${result.body}`);
 
   if (!saved) {
     process.exitCode = 1;
@@ -69,12 +70,12 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
 };
 
 const send = async (jsonText: string | undefined): Promise<void> => {
-  const logger = createLogger();
+  const logger = await createLogger(createLogFilePath());
   const parsedBody = parseJsonObject(jsonText);
 
   if (parsedBody === undefined) {
-    logger.error("Invalid JSON. Expected a JSON object.");
-    logger.log(`requestBody: ${jsonText ?? ""}`);
+    await logger.error("Invalid JSON. Expected a JSON object.");
+    await logger.stdout(`requestBody: ${jsonText ?? ""}`);
     process.exitCode = 1;
 
     return;
@@ -83,8 +84,11 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const config = await loadConfig();
 
   if (config === undefined) {
-    logger.error("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
-    logger.log(`requestBody: ${JSON.stringify(parsedBody)}`);
+    await logger.error(
+      "Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.",
+    );
+
+    await logger.stdout(`requestBody: ${JSON.stringify(parsedBody)}`);
     process.exitCode = 1;
 
     return;
@@ -94,15 +98,15 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const result = await postJson(config.webhookUrl, requestBody);
   const status = String(result.status);
 
-  logger.log(status);
+  await logger.stdout(status);
 
   if (isSuccessStatus(result.status)) {
     return;
   }
 
-  logger.error(result.error);
-  logger.log(`requestBody: ${requestBody}`);
-  logger.log(`responseBody: ${result.body}`);
+  await logger.error(result.error);
+  await logger.stdout(`requestBody: ${requestBody}`);
+  await logger.stdout(`responseBody: ${result.body}`);
   process.exitCode = 1;
 };
 
@@ -204,6 +208,12 @@ const loadConfig = async (): Promise<Config | undefined> => {
 const saveConfig = async (config: Config): Promise<void> => {
   await mkdir(configDirectoryPath, { recursive: true });
   await writeFile(configFilePath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+};
+
+const createLogFilePath = (): string => {
+  const timestamp = new Date().toISOString().replaceAll(":", "-");
+
+  return join(logDirectoryPath, `${timestamp}.log`);
 };
 
 await main();
