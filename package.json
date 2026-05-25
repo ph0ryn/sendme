@@ -1,6 +1,6 @@
 {
   "name": "sendme-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Minimal CLI for agents to send messages to Discord",
   "repository": {
     "type": "git",
