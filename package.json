@@ -1,8 +1,11 @@
 {
-  "name": "ts-base",
+  "name": "sendme",
   "private": true,
   "type": "module",
   "module": "src/index.ts",
+  "bin": {
+    "sendme": "src/index.ts"
+  },
   "scripts": {
     "format": "pnpm run lint --fix . ; oxfmt . ; eslint --fix .",
     "preinstall": "npx only-allow pnpm",
@@ -26,6 +29,7 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "catalog:",
+    "@types/node": "catalog:",
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-oxlint": "catalog:",

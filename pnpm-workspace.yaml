@@ -3,6 +3,7 @@ packages:
 
 catalog:
   '@stylistic/eslint-plugin': ^5.10.0
+  '@types/node': ^24.10.1
   '@typescript/native-preview': 7.0.0-dev.20260430.1
   eslint: ^10.3.0
   eslint-plugin-oxlint: ^1.62.0

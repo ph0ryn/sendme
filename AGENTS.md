@@ -1,18 +1,17 @@
-# ts-base Agent Guide
+# sendme Agent Guide
 
 ## Repository Purpose
 
-This repository is a reusable TypeScript template. Treat changes as template
-maintenance unless the user explicitly asks to turn it into a concrete project.
+This repository contains a tiny Bun-compatible TypeScript CLI that sends JSON
+objects to a saved Discord webhook.
 
-Keep the template small, generic, and easy to fork. Do not add app-specific
-frameworks, runtime assumptions, build pipelines, or documentation unless the
-request specifically needs them.
+Keep the CLI small and dependency-light. It is intended for AI agents to call
+with minimal output.
 
 ## Tooling
 
 - Package manager: pnpm only. Do not use npm or yarn.
-- Runtime target: Bun-compatible ESM.
+- Runtime target: Bun-compatible ESM CLI.
 - Module system: ESM with `"type": "module"`.
 - TypeScript is configured as strict and `noEmit`.
 - Linting and type checking are primarily handled by Oxlint, with ESLint used
@@ -41,15 +40,14 @@ There is currently no `test`, `build`, or separate `typecheck` script.
 - Preserve pnpm workspace catalog usage in `pnpm-workspace.yaml` when updating
   dependencies.
 - Prefer small, direct changes over new abstractions.
-- Do not add dependencies for documentation-only or housekeeping changes.
-- Do not widen the template into a framework starter unless explicitly asked.
-- Keep generated-project instructions in `README.md`; keep agent workflow notes
-  in this file.
+- Do not add dependencies for simple CLI parsing, config, or HTTP behavior.
+- Keep successful send output status-only.
+- Store config under `~/.config/sendme`.
 
 ## Validation
 
-For repository changes, run the narrowest relevant checks first. For normal
-template maintenance, use:
+For repository changes, run the narrowest relevant checks first. For normal CLI
+maintenance, use:
 
 ```sh
 pnpm run format
