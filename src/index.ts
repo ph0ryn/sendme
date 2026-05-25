@@ -4,6 +4,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+import { createLogger } from "./logger.ts";
+
 const configDirectoryPath = join(homedir(), ".config", "sendme");
 const configFilePath = join(configDirectoryPath, "config.json");
 const authTestBody = { content: "sendme auth test" };
@@ -12,7 +14,7 @@ interface Config {
   webhookUrl: string;
 }
 
-interface SendResult {
+interface PostResult {
   body: string;
   error?: string;
   status: number;
@@ -33,23 +35,24 @@ const main = async (): Promise<void> => {
 };
 
 const auth = async (webhookUrlText: string | undefined): Promise<void> => {
+  const logger = createLogger("auth");
   const webhookUrl = parseWebhookUrl(webhookUrlText);
   const requestBody = JSON.stringify(authTestBody);
 
-  logCommand("auth");
+  logger.command();
 
   if (webhookUrl === undefined) {
-    logStatus(400);
-    logSaved(false);
-    logError("Invalid webhook URL. Expected an http or https URL.");
-    logRequestBody(webhookUrlText ?? "");
+    logger.log("status: 400");
+    logger.log("saved: false");
+    logger.error("Invalid webhook URL. Expected an http or https URL.");
+    logger.log(`requestBody: ${webhookUrlText ?? ""}`);
     process.exitCode = 1;
 
     return;
   }
 
-  logTestedUrl(webhookUrl);
-  logRequestBody(requestBody);
+  logger.log(`testedUrl: ${webhookUrl}`);
+  logger.log(`requestBody: ${requestBody}`);
 
   const result = await postJson(webhookUrl, requestBody);
   const saved = isSuccessStatus(result.status);
@@ -58,10 +61,10 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
     await saveConfig({ webhookUrl });
   }
 
-  logStatus(result.status);
-  logSaved(saved);
-  logOptionalError(result.error);
-  logResponseBody(result.body);
+  logger.log(`status: ${result.status}`);
+  logger.log(`saved: ${saved}`);
+  logger.error(result.error);
+  logger.log(`responseBody: ${result.body}`);
 
   if (!saved) {
     process.exitCode = 1;
@@ -69,13 +72,14 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
 };
 
 const send = async (jsonText: string | undefined): Promise<void> => {
+  const logger = createLogger("send");
   const parsedBody = parseJsonObject(jsonText);
 
   if (parsedBody === undefined) {
-    logStatus(400);
-    logCommand("send");
-    logError("Invalid JSON. Expected a JSON object.");
-    logRequestBody(jsonText ?? "");
+    logger.log("status: 400");
+    logger.command();
+    logger.error("Invalid JSON. Expected a JSON object.");
+    logger.log(`requestBody: ${jsonText ?? ""}`);
     process.exitCode = 1;
 
     return;
@@ -84,10 +88,10 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const config = await loadConfig();
 
   if (config === undefined) {
-    logStatus(401);
-    logCommand("send");
-    logError("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
-    logRequestBody(JSON.stringify(parsedBody));
+    logger.log("status: 401");
+    logger.command();
+    logger.error("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
+    logger.log(`requestBody: ${JSON.stringify(parsedBody)}`);
     process.exitCode = 1;
 
     return;
@@ -102,11 +106,11 @@ const send = async (jsonText: string | undefined): Promise<void> => {
     return;
   }
 
-  logStatus(result.status);
-  logCommand("send");
-  logOptionalError(result.error);
-  logRequestBody(requestBody);
-  logResponseBody(result.body);
+  logger.log(`status: ${result.status}`);
+  logger.command();
+  logger.error(result.error);
+  logger.log(`requestBody: ${requestBody}`);
+  logger.log(`responseBody: ${result.body}`);
   process.exitCode = 1;
 };
 
@@ -154,7 +158,7 @@ const parseJsonObject = (value: string | undefined): Record<string, unknown> | u
   }
 };
 
-const postJson = async (webhookUrl: string, body: string): Promise<SendResult> => {
+const postJson = async (webhookUrl: string, body: string): Promise<PostResult> => {
   try {
     const response = await fetch(webhookUrl, {
       body,
@@ -208,42 +212,6 @@ const loadConfig = async (): Promise<Config | undefined> => {
 const saveConfig = async (config: Config): Promise<void> => {
   await mkdir(configDirectoryPath, { recursive: true });
   await writeFile(configFilePath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
-};
-
-const logStatus = (status: number): void => {
-  console.log(`status: ${status}`);
-};
-
-const logCommand = (command: string): void => {
-  console.log(`command: ${command}`);
-};
-
-const logSaved = (saved: boolean): void => {
-  console.log(`saved: ${saved}`);
-};
-
-const logTestedUrl = (testedUrl: string): void => {
-  console.log(`testedUrl: ${testedUrl}`);
-};
-
-const logError = (error: string): void => {
-  console.log(`error: ${error}`);
-};
-
-const logOptionalError = (error: string | undefined): void => {
-  if (error !== undefined) {
-    logError(error);
-  }
-};
-
-const logRequestBody = (requestBody: string): void => {
-  console.log("requestBody:");
-  console.log(requestBody);
-};
-
-const logResponseBody = (responseBody: string): void => {
-  console.log("responseBody:");
-  console.log(responseBody);
 };
 
 await main();
