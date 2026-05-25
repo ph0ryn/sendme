@@ -36,19 +36,20 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
   const webhookUrl = parseWebhookUrl(webhookUrlText);
   const requestBody = JSON.stringify(authTestBody);
 
-  if (webhookUrl === undefined) {
-    writeLog({
-      command: "auth",
-      error: "Invalid webhook URL. Expected an http or https URL.",
-      requestBody: webhookUrlText ?? "",
-      saved: false,
-      status: 400,
-    });
+  logCommand("auth");
 
+  if (webhookUrl === undefined) {
+    logStatus(400);
+    logSaved(false);
+    logError("Invalid webhook URL. Expected an http or https URL.");
+    logRequestBody(webhookUrlText ?? "");
     process.exitCode = 1;
 
     return;
   }
+
+  logTestedUrl(webhookUrl);
+  logRequestBody(requestBody);
 
   const result = await postJson(webhookUrl, requestBody);
   const saved = isSuccessStatus(result.status);
@@ -57,15 +58,10 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
     await saveConfig({ webhookUrl });
   }
 
-  writeLog({
-    command: "auth",
-    error: result.error,
-    requestBody,
-    responseBody: result.body,
-    saved,
-    status: result.status,
-    testedUrl: webhookUrl,
-  });
+  logStatus(result.status);
+  logSaved(saved);
+  logOptionalError(result.error);
+  logResponseBody(result.body);
 
   if (!saved) {
     process.exitCode = 1;
@@ -76,13 +72,10 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const parsedBody = parseJsonObject(jsonText);
 
   if (parsedBody === undefined) {
-    writeLog({
-      command: "send",
-      error: "Invalid JSON. Expected a JSON object.",
-      requestBody: jsonText ?? "",
-      status: 400,
-    });
-
+    logStatus(400);
+    logCommand("send");
+    logError("Invalid JSON. Expected a JSON object.");
+    logRequestBody(jsonText ?? "");
     process.exitCode = 1;
 
     return;
@@ -91,13 +84,10 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const config = await loadConfig();
 
   if (config === undefined) {
-    writeLog({
-      command: "send",
-      error: "Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.",
-      requestBody: JSON.stringify(parsedBody),
-      status: 401,
-    });
-
+    logStatus(401);
+    logCommand("send");
+    logError("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
+    logRequestBody(JSON.stringify(parsedBody));
     process.exitCode = 1;
 
     return;
@@ -112,14 +102,11 @@ const send = async (jsonText: string | undefined): Promise<void> => {
     return;
   }
 
-  writeLog({
-    command: "send",
-    error: result.error,
-    requestBody,
-    responseBody: result.body,
-    status: result.status,
-  });
-
+  logStatus(result.status);
+  logCommand("send");
+  logOptionalError(result.error);
+  logRequestBody(requestBody);
+  logResponseBody(result.body);
   process.exitCode = 1;
 };
 
@@ -223,38 +210,40 @@ const saveConfig = async (config: Config): Promise<void> => {
   await writeFile(configFilePath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 };
 
-const writeLog = (entries: {
-  command: string;
-  error?: string;
-  requestBody: string;
-  responseBody?: string;
-  saved?: boolean;
-  status: number;
-  testedUrl?: string;
-}): void => {
-  const lines = [`status: ${entries.status}`, `command: ${entries.command}`];
+const logStatus = (status: number): void => {
+  console.log(`status: ${status}`);
+};
 
-  if (entries.saved !== undefined) {
-    lines.push(`saved: ${entries.saved}`);
+const logCommand = (command: string): void => {
+  console.log(`command: ${command}`);
+};
+
+const logSaved = (saved: boolean): void => {
+  console.log(`saved: ${saved}`);
+};
+
+const logTestedUrl = (testedUrl: string): void => {
+  console.log(`testedUrl: ${testedUrl}`);
+};
+
+const logError = (error: string): void => {
+  console.log(`error: ${error}`);
+};
+
+const logOptionalError = (error: string | undefined): void => {
+  if (error !== undefined) {
+    logError(error);
   }
+};
 
-  if (entries.testedUrl !== undefined) {
-    lines.push(`testedUrl: ${entries.testedUrl}`);
-  }
+const logRequestBody = (requestBody: string): void => {
+  console.log("requestBody:");
+  console.log(requestBody);
+};
 
-  if (entries.error !== undefined) {
-    lines.push(`error: ${entries.error}`);
-  }
-
-  lines.push("requestBody:");
-  lines.push(entries.requestBody);
-
-  if (entries.responseBody !== undefined) {
-    lines.push("responseBody:");
-    lines.push(entries.responseBody);
-  }
-
-  console.log(lines.join("\n"));
+const logResponseBody = (responseBody: string): void => {
+  console.log("responseBody:");
+  console.log(responseBody);
 };
 
 await main();
