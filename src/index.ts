@@ -42,7 +42,6 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
   logger.command();
 
   if (webhookUrl === undefined) {
-    logger.log("status: 400");
     logger.log("saved: false");
     logger.error("Invalid webhook URL. Expected an http or https URL.");
     logger.log(`requestBody: ${webhookUrlText ?? ""}`);
@@ -76,7 +75,6 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const parsedBody = parseJsonObject(jsonText);
 
   if (parsedBody === undefined) {
-    logger.log("400");
     logger.command();
     logger.error("Invalid JSON. Expected a JSON object.");
     logger.log(`requestBody: ${jsonText ?? ""}`);
@@ -88,7 +86,6 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const config = await loadConfig();
 
   if (config === undefined) {
-    logger.log("401");
     logger.command();
     logger.error("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
     logger.log(`requestBody: ${JSON.stringify(parsedBody)}`);
