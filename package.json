@@ -18,10 +18,8 @@
   "scripts": {
     "build": "tsdown",
     "format": "pnpm run lint --fix . ; oxfmt . ; eslint --fix .",
-    "preinstall": "npx only-allow pnpm",
-    "postinstall": "git config core.hooksPath .githooks",
     "lint": "oxlint --type-aware --type-check",
-    "prepack": "pnpm run precommit && pnpm run build && clean-pkg-json -r devDependencies -r scripts",
+    "prepack": "pnpm run precommit && pnpm run build && clean-pkg-json -r devDependencies",
     "precommit": "pnpm run format"
   },
   "lint-staged": {
