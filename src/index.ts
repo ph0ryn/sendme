@@ -35,11 +35,9 @@ const main = async (): Promise<void> => {
 };
 
 const auth = async (webhookUrlText: string | undefined): Promise<void> => {
-  const logger = createLogger("auth");
+  const logger = createLogger();
   const webhookUrl = parseWebhookUrl(webhookUrlText);
   const requestBody = JSON.stringify(authTestBody);
-
-  logger.command();
 
   if (webhookUrl === undefined) {
     logger.log("saved: false");
@@ -71,11 +69,10 @@ const auth = async (webhookUrlText: string | undefined): Promise<void> => {
 };
 
 const send = async (jsonText: string | undefined): Promise<void> => {
-  const logger = createLogger("send");
+  const logger = createLogger();
   const parsedBody = parseJsonObject(jsonText);
 
   if (parsedBody === undefined) {
-    logger.command();
     logger.error("Invalid JSON. Expected a JSON object.");
     logger.log(`requestBody: ${jsonText ?? ""}`);
     process.exitCode = 1;
@@ -86,7 +83,6 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const config = await loadConfig();
 
   if (config === undefined) {
-    logger.command();
     logger.error("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
     logger.log(`requestBody: ${JSON.stringify(parsedBody)}`);
     process.exitCode = 1;
@@ -104,7 +100,6 @@ const send = async (jsonText: string | undefined): Promise<void> => {
     return;
   }
 
-  logger.command();
   logger.error(result.error);
   logger.log(`requestBody: ${requestBody}`);
   logger.log(`responseBody: ${result.body}`);
