@@ -1,6 +1,6 @@
-# sendme
+# sendme-cli
 
-Tiny Bun CLI for sending JSON to a Discord webhook.
+Minimal CLI for agents to send messages to Discord.
 
 ## Requirements
 
