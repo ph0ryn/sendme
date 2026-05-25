@@ -76,7 +76,7 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const parsedBody = parseJsonObject(jsonText);
 
   if (parsedBody === undefined) {
-    logger.log("status: 400");
+    logger.log("400");
     logger.command();
     logger.error("Invalid JSON. Expected a JSON object.");
     logger.log(`requestBody: ${jsonText ?? ""}`);
@@ -88,7 +88,7 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const config = await loadConfig();
 
   if (config === undefined) {
-    logger.log("status: 401");
+    logger.log("401");
     logger.command();
     logger.error("Webhook URL is not configured. Run `sendme auth -- DISCORD_WEBHOOK_URL` first.");
     logger.log(`requestBody: ${JSON.stringify(parsedBody)}`);
@@ -99,14 +99,14 @@ const send = async (jsonText: string | undefined): Promise<void> => {
 
   const requestBody = JSON.stringify(parsedBody);
   const result = await postJson(config.webhookUrl, requestBody);
+  const status = String(result.status);
+
+  logger.log(status);
 
   if (isSuccessStatus(result.status)) {
-    logger.log(String(result.status));
-
     return;
   }
 
-  logger.log(`status: ${result.status}`);
   logger.command();
   logger.error(result.error);
   logger.log(`requestBody: ${requestBody}`);
