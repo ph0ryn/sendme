@@ -101,7 +101,7 @@ const send = async (jsonText: string | undefined): Promise<void> => {
   const result = await postJson(config.webhookUrl, requestBody);
 
   if (isSuccessStatus(result.status)) {
-    console.log(result.status);
+    logger.log(String(result.status));
 
     return;
   }
